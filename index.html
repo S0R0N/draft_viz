@@ -324,7 +324,7 @@ and open the template in the editor.
                 }
             }
             // THE TRIGGER OF ALL THE WORK
-            d3.json("data/gp_assignments.json").then(function(res){       
+            d3.json("https://raw.githubusercontent.com/S0R0N/draft_viz/master/data/gp_assignments.json").then(function(res){       
                 //Initializing root
                 root         = d3.hierarchy(res.property_tree);
                 sample_names = d3.hierarchy(res.sample_names);
