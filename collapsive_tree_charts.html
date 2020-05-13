@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Micromeda-Complementary-Viz</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+
+	.node circle {
+	  fill: #fff;
+	  stroke: steelblue;
+	  stroke-width: 2px;
+	}
+
+	.node text { font: 12px sans-serif; }
+
+	.link {
+	  fill: none;
+	  stroke: #e5e5e5;
+	  stroke-width: 2px;
+	}
+        .subtitle_result_color{
+            font-family: sans-serif;
+            font-size: 10px;
+        }
+	
+    </style>
+    </head>
+    <body>
+        <div>Micromeda-Complementary-Viz [Draft Version]</div>
+        <div id="subtitle_legends" class="subtitle">SAMPLE - LEGENDS</div>
+        <div id="sample_name"></div>
+        <div id="subtitle_result_color" class="subtitle">RESULT COLOR - LEGENDS</div>
+        <div id="color_legends" ></div>
+        <script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+        <script>
+            // Set the dimensions and margins of the diagram
+            var margin = {top: 20, right: 90, bottom: 30, left: 150},
+                width = 2400 - margin.left - margin.right,
+                height = 2400 - margin.top - margin.bottom;
+            // append the svg object to the body of the page
+            // appends a 'group' element to 'svg'
+            // moves the 'group' element to the top left margin
+            var svg = d3.select("body")
+                    .append("svg")
+                    .attr("width", width + margin.right + margin.left)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate("
+                      + margin.left + "," + margin.top + ")");
+            var j = 0,
+                duration = 550,
+                root,
+                sample_names;
+            // THIS VARIABLE DEFINES THE CANVAS AREA FOR THE TREE AND ITS NODES
+            var treemap = d3.tree()
+                    .size([width, height]);
+            
+            // Collapse the node and all it's children
+            function collapse(d) {
+              if(d.children) {
+                d._children = d.children;
+                d._children.forEach(collapse);
+                d.children = null;
+              }
+            }
+            var subgroups = ['YES','PARTIAL','NO'];
+                
+            var color = d3.scaleOrdinal()
+                .domain(subgroups)
+                .range(['#d55e00','#f0e442','lightsteelblue']);
+            
+            function update(source) {
+                // Assigns the x and y position for the nodes
+                //console.log(source);
+                
+                  
+                  //transform it so it is bellow the squares 
+                  //make the text vertical, rotated. 
+                  //fin a good font size 
+                  //.on('dblclick', click);
+                // add the rect object to the sample name thingy 
+                // fill the rect object with the data of the samples. 
+                // 
+                //*************************************************************
+                //**                 END THE LEGENDS OBJECT             **
+                //*************************************************************
+                
+                //var treeData = treemap(source);
+                //WHEN HAVONG THE DATA UPDATE THE DATA SAMPLE DIV with the variable sample_names
+                /*d3.select('#sample_name')
+                        .text('Sample: ' + sample_names.data);*/
+                
+                var treeData = treemap(root);// GLOBAL FIZED ROOT
+                                             // SOURCE IS THE TEMPORARY ROOT, ie., the level being explored by the user
+               
+                var nodes = treeData.descendants(),
+                    links = treeData.descendants().slice(1);
+
+                //nodes.forEach(function(d){(console.log(d.data.result[0]));});// Horizontal distance between nodes
+                //console.log(getNames(nodes));
+                //console.log(nodes[0].data.name);
+                // Normalize for fixed-depth.
+                nodes.forEach(function(d){ d.y = d.depth * 280;});// Horizontal distance between nodes
+                // ****************** Nodes section ***************************
+
+                // Update the nodes... Checking it prints all the ids or index
+                var node = svg.selectAll('g.node')
+                    .data(nodes, function(d) {
+                        //console.log(d.id || (d.id = ++i));
+                        return d.id || (d.id = ++j); }
+                    );
+
+                // Enter any new modes at the parent's previous position.
+                // THE NODE ENTER IS THE EVENT WHEN THE CHILD NODES TO EXPAND ARE CREATED IN THE SAME PLACE AS THE ROOT, but are hidden, expecting to be expanded.
+                // -  first you move them where their parent was
+                var nodeEnter = node.enter().append('g')
+                    .attr('class', 'node')
+                    .attr("transform", function(d) {
+                      return "translate(" + source.y0 + "," + source.x0 + ")";
+                  })
+                  .on('dblclick', click);
+
+                // Add Circle for the nodes
+                // - second you cero the radious to disspear them
+                // - if d._children is true then fills ilght blue else it is white.
+                nodeEnter.append('circle')
+                    .attr('class', 'node')
+                    .attr('r', 1e-6)
+                    //.attr('r', 10)
+                    .style("fill", function(d) {
+                        //ADD THE VERIFICATION OF THE RESULT TO CHANGE THE FILL COLOR OF THE NODE
+                        var col;
+                        switch(d.data.result[0]) {
+                            case 'YES':
+                                //background green
+                                col = d._children ? "red" : "red";
+                                break;
+                            case 'PARTIAL':
+                                //background yellow
+                                //return d._children ? 
+                                col = d._children ? "#FF7F50" : "#FF7F50";
+                                break;
+                            default:
+                                //background grey
+                                col = d._children ? "lightsteelblue" : "#fff";
+                                //return d._children ? "lightsteelblue" : "#fff";
+                                break;
+                        }
+                        //console.log(col);
+                        return col;                        
+                    });
+
+                // Add labels for the nodes
+                nodeEnter.append('text')
+                    .attr("dy", ".35em")
+                    .attr("x", function(d) {
+                        return d.children || d._children ? -20 : 20;// Sets the label either behind or in front of the node, depending if it is a leaf or an inner node.
+                    })
+                    .attr("text-anchor", function(d) {
+                        return d.children || d._children ? "end" : "start";
+                    })
+                    .text(function(d) {
+                        // if the name has more than x characters, cut it 
+                        // if the name is finall show the complete label
+                            var output;
+                            const thres = 35;
+                            if(d._children){
+                                output = d.data.name.length>thres ? d.data.name.substring(0,thres).concat("..."):d.data.name;
+                            }else{
+                                output = d.data.name;
+                            }
+                            //console.log(output);
+                            return output;
+                        }
+                    );
+//##############################################################################
+//##                          CHART - ENTER                                   ##
+//##############################################################################
+
+                var chartBoxSize =5;
+                var chartBoxYSize = chartBoxSize* sample_names.data.length + sample_names.data.length;
+                //console.log("chartboxYSize");
+                //console.log(chartBoxYSize);
+                var y = d3.scaleLinear()
+                  .domain([0, sample_names.data.length])
+                  .range([ chartBoxYSize, 0 ]);
+                //var subgroups = sample_names.data;
+                /*var subgroups = ['YES','PARTIAL','NO'];
+                
+                var color = d3.scaleOrdinal()
+                    .domain(subgroups)
+                    .range(['#d55e00','#f0e442','lightsteelblue']);*/
+            
+                nodeEnter.append('g')
+                        .selectAll("rect")
+                        .data(function(d) { return d.data.result; })
+                            .enter().append("rect")
+                            .style("stroke", "black")
+                            .style("stroke-width", 1)
+                                .attr("fill",d => color(d))
+                                .attr("y", 
+                                    function(d,i) {
+                                        return y(i)-5; 
+                                    }
+                                )
+                                .attr("x",-15)
+                                .attr("height",y(17))
+                                .attr("transform","rotate (270)")
+                                .attr("width",10);
+                // UPDATE
+                var nodeUpdate = nodeEnter.merge(node);
+                // Transition to the proper position for the node
+                nodeUpdate.transition()
+                  .duration(duration)
+                  .attr("transform", function(d) { 
+                      return "translate(" + d.y + "," + d.x + ")";
+                   });
+
+                // Update the node attributes and style
+                nodeUpdate.select('circle.node')
+                  .attr('r', 5)
+                  .style("fill", function(d) {
+                      //ADD THE VERIFICATION OF THE RESULT TO CHANGE THE FILL COLOR OF THE NODE
+                        var col;
+                        switch(d.data.result[0]) {
+                            case 'YES':
+                                //background green
+                                col = '#d55e00';
+                                break;
+                            case 'PARTIAL':
+                                //background yellow
+                                //return d._children ? 
+                                col = '#f0e442';
+                                break;
+                            default:
+                                //background grey
+                                col = d._children ? "lightsteelblue" : "#fff";
+                                //return d._children ? "lightsteelblue" : "#fff";
+                                break;
+                        }
+                        //console.log(col);
+                        return col;                        
+                    })
+                  .attr('cursor', 'pointer');
+
+
+                // Remove any exiting nodes
+                var nodeExit = node.exit().transition()
+                    .duration(duration)
+                    .attr("transform", function(d) {
+                        return "translate(" + source.y + "," + source.x + ")";
+                    })
+                    .remove();
+
+                // On exit reduce the node circles size to 0
+                nodeExit.select('circle')
+                  .attr('r', 1e-6);
+
+                // On exit reduce the opacity of text labels
+                nodeExit.select('text')
+                  .style('fill-opacity', 1e-6);
+
+                // ****************** links section ***************************
+
+                // Update the links...
+                var link = svg.selectAll('path.link')
+                    .data(links, function(d) { return d.id; });
+
+                // Enter any new links at the parent's previous position.
+                var linkEnter = link.enter().insert('path', "g")
+                    .attr("class", "link")
+                    .attr('d', function(d){
+                        var o = {x: source.x0, y: source.y0};
+                        return diagonal(o, o);
+                    });
+
+                // UPDATE
+                var linkUpdate = linkEnter.merge(link);
+
+                // Transition back to the parent element position
+                linkUpdate.transition()
+                    .duration(duration)
+                    .attr('d', function(d){ return diagonal(d, d.parent); });
+
+                // Remove any exiting links
+                var linkExit = link.exit().transition()
+                    .duration(duration)
+                    .attr('d', function(d) {
+                      var o = {x: source.x, y: source.y};
+                      return diagonal(o, o);
+                    })
+                    .remove();
+
+                // Store the old positions for transition.
+                nodes.forEach(function(d){
+                  d.x0 = d.x;
+                  d.y0 = d.y;
+                });
+                // Creates a curved (diagonal) path from parent to the child nodes
+                function diagonal(s, d) {
+                  path = `M ${s.y} ${s.x}
+                          C ${(s.y + d.y) / 2} ${s.x},
+                            ${(s.y + d.y) / 2} ${d.x},
+                            ${d.y} ${d.x}`;
+                  return path;
+                }
+
+                // Toggle children on click.
+                function click(d) {
+                  if (d.children) {
+                      d._children = d.children;
+                      d.children = null;
+                    } else {
+                      d.children = d._children;
+                      d._children = null;
+                    }
+                  update(d);
+                }
+            }
+            // THE TRIGGER OF ALL THE WORK
+            d3.json("/d3_tutorial/data/gp_assignments.json").then(function(res){       
+                //Initializing root
+                root         = d3.hierarchy(res.property_tree);
+                sample_names = d3.hierarchy(res.sample_names);
+                root.x0      = height / 2;
+                root.y0      = 0; 
+                root.children.forEach(collapse);
+                
+                //console.log(sample_names.data.length);
+                //#############################################################
+                //##                 CREATING THE LEGENDS OBJECT             ##
+                //#############################################################
+                var sample_legend_width  = 30;
+                var sample_legend_height = 30;
+                
+                var sample_legend_total_width = sample_legend_width * sample_names.data.length;
+                /*var sample_legend_text = d3.select("#sample_name")
+                    .append("div")
+                    .attr("width", sample_legend_total_width)
+                    .attr("height", 50);
+            
+                    sample_legend_text.append(text)
+                            .text("LEGEND");*/
+                var sel = ["YES","PARTIAL","NO"];
+                console.log(sel);
+                var color_legend_svg = d3.select("#color_legends")
+                    .append("svg")
+                    .attr("width", sample_legend_total_width)
+                    .attr("height", 50);
+                var cl_rect = color_legend_svg.append("g").selectAll('g.clegend')
+                    .data(sel, function(d,i) {
+                        //console.log(d.id || (d.id = ++i));
+                        return d.id || (d.id = i); }
+                    );
+                var cl_rectEnter = cl_rect.enter()
+                        .append('g')
+                        //.attr("transfor","translate("+ 10 + "," + 10 + ")")
+                        .attr("class","clegend");
+                    cl_rectEnter.append('text')
+                        .attr("x", 
+                            function(d,i) {
+                                return (sample_legend_total_width/3)*i; 
+                            }
+                        )
+                        .attr("y",15)
+                        .text(d =>d);
+                    cl_rectEnter.append("rect")
+                        .style("stroke", "black")
+                        .style("stroke-width", 1)
+                        .attr("fill",d => color(d))//aignale el color dependiendo del valor
+                        .attr("x", 
+                            function(d,i) {
+                                return (sample_legend_total_width/3)*i; 
+                            }
+                        )
+                        .attr("y",20)
+                        .attr("height",sample_legend_height)
+                        //.attr("transform","rotate (270)")
+                        .attr("width",sample_legend_width);
+                        
+                    
+            
+                var sample_legend_svg = d3.select("#sample_name")
+                    .append("svg")
+                    .attr("width", sample_legend_total_width)
+                    .attr("height", 200);
+                
+                var sl_rect = sample_legend_svg.append("g").selectAll('g.legend')
+                    .data(sample_names.data, function(d) {
+                        //console.log(d.id || (d.id = ++i));
+                        return d.id || (d.id = ++j); }
+                    );
+                var sl_rectEnter = sl_rect.enter()
+                        .append('g')
+                        .attr("class","legend");
+                
+                    sl_rectEnter.append("rect")
+                        .style("stroke", "black")
+                        .style("stroke-width", 1)
+                        .attr("fill","white")
+                        .attr("x", 
+                            function(d,i) {
+                                return sample_legend_width*i; 
+                            }
+                        )
+                        .attr("y",0)
+                        .attr("height",sample_legend_height)
+                        //.attr("transform","rotate (270)")
+                        .attr("width",sample_legend_width);
+                        
+                    sl_rectEnter.append('text')
+                        .attr("x", 
+                            function(d,i) {
+                                return sample_legend_width*i+sample_legend_width/2; 
+                            }
+                        )
+                      //.attr("transform","rotate (270)")
+                        .style("writing-mode","vertical-rl")
+                        .attr("font-family", "sans-serif")
+                        .attr("font-size", 12)
+                        .text(d =>d)
+                        .attr("y",sample_legend_height+2);
+                    
+                //#############################################################
+                //##                 CREATING THE LEGENDS OBJECT             ##
+                //#############################################################
+                update(root);
+            });
+            
+        </script>
+    </body>
+</html>
