@@ -13,8 +13,8 @@ and open the template in the editor.
 
 	.node circle {
 	  fill: #fff;
-	  stroke: steelblue;
-	  stroke-width: 2px;
+	  stroke: grey;
+	  stroke-width: 1px;
 	}
 
 	.node text { font: 12px sans-serif; }
@@ -41,7 +41,7 @@ and open the template in the editor.
         <script>
             // Set the dimensions and margins of the diagram
             var margin = {top: 20, right: 90, bottom: 30, left: 150},
-                width = 2400 - margin.left - margin.right,
+                width = 3000 - margin.left - margin.right,
                 height = 2400 - margin.top - margin.bottom;
             // append the svg object to the body of the page
             // appends a 'group' element to 'svg'
@@ -70,10 +70,9 @@ and open the template in the editor.
               }
             }
             var subgroups = ['YES','PARTIAL','NO'];
-                
             var color = d3.scaleOrdinal()
                 .domain(subgroups)
-                .range(['#d55e00','#f0e442','lightsteelblue']);
+                .range(['#6c6c6c','#cecece','white']);
             
             function update(source) {
                 // Assigns the x and y position for the nodes
@@ -107,6 +106,7 @@ and open the template in the editor.
                 //console.log(nodes[0].data.name);
                 // Normalize for fixed-depth.
                 nodes.forEach(function(d){ d.y = d.depth * 280;});// Horizontal distance between nodes
+                //nodes.forEach(function(d){ d.x = d.depth * 10;});
                 // ****************** Nodes section ***************************
 
                 // Update the nodes... Checking it prints all the ids or index
@@ -135,25 +135,7 @@ and open the template in the editor.
                     //.attr('r', 10)
                     .style("fill", function(d) {
                         //ADD THE VERIFICATION OF THE RESULT TO CHANGE THE FILL COLOR OF THE NODE
-                        var col;
-                        switch(d.data.result[0]) {
-                            case 'YES':
-                                //background green
-                                col = d._children ? "red" : "red";
-                                break;
-                            case 'PARTIAL':
-                                //background yellow
-                                //return d._children ? 
-                                col = d._children ? "#FF7F50" : "#FF7F50";
-                                break;
-                            default:
-                                //background grey
-                                col = d._children ? "lightsteelblue" : "#fff";
-                                //return d._children ? "lightsteelblue" : "#fff";
-                                break;
-                        }
-                        //console.log(col);
-                        return col;                        
+                        return color(d.data.result[0]);                        
                     });
 
                 // Add labels for the nodes
@@ -201,7 +183,7 @@ and open the template in the editor.
                         .selectAll("rect")
                         .data(function(d) { return d.data.result; })
                             .enter().append("rect")
-                            .style("stroke", "black")
+                            .style("stroke", "grey")
                             .style("stroke-width", 1)
                                 .attr("fill",d => color(d))
                                 .attr("y", 
@@ -227,7 +209,7 @@ and open the template in the editor.
                   .attr('r', 5)
                   .style("fill", function(d) {
                       //ADD THE VERIFICATION OF THE RESULT TO CHANGE THE FILL COLOR OF THE NODE
-                        var col;
+                        /*var col;
                         switch(d.data.result[0]) {
                             case 'YES':
                                 //background green
@@ -243,9 +225,10 @@ and open the template in the editor.
                                 col = d._children ? "lightsteelblue" : "#fff";
                                 //return d._children ? "lightsteelblue" : "#fff";
                                 break;
-                        }
+                        }*/
                         //console.log(col);
-                        return col;                        
+                        //d.data.result[0]
+                        return color(d.data.result[0]);
                     })
                   .attr('cursor', 'pointer');
 
